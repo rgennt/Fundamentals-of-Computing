@@ -1,0 +1,188 @@
+# Basic infrastructure for Bubble Shooter
+
+import simplegui
+import random
+import math
+
+# Global constants
+WIDTH = 800
+HEIGHT = 600
+FIRING_POSITION = [WIDTH // 2, HEIGHT]
+FIRING_LINE_LENGTH = 360
+FIRING_ANGLE_VEL_INC = 0.02
+BUBBLE_RADIUS = 20
+COLOR_LIST = ["Red", "Green", "Blue", "White"]
+bubble_stuck = True
+
+# global variables
+firing_angle = math.pi / 2
+firing_angle_vel = 0
+bubble_stuck = True
+stuck_bubbles = set([])
+
+firing_sound = simplegui.load_sound("http://commondatastorage.googleapis.com/codeskulptor-assets/Collision8-Bit.ogg")
+
+    
+    
+
+# helper functions to handle transformations
+def angle_to_vector(ang):
+    return [math.cos(ang), math.sin(ang)]
+
+def dist(p,q):
+    return math.sqrt((p[0]-q[0])**2+(p[1]-q[1])**2)
+
+
+# class defintion for Bubbles
+class Bubble:
+    
+    def __init__(self):
+        self.pos = list (FIRING_POSITION)
+        self.vel = [0, 0]
+        self.color = str (random.choice (COLOR_LIST))
+        self.sound = firing_sound
+        
+        
+    
+    def update(self):
+        self.pos [0] += self.vel [0]
+        self.pos [1] += self.vel [1]
+        
+        if self.pos[0] <= BUBBLE_RADIUS: 
+            self.vel[0] = - self.vel[0]
+            self.sound.play()
+        elif self.pos[0] >= (WIDTH - BUBBLE_RADIUS):
+            self.vel[0] = - self.vel[0] 
+            self.sound.play()
+            
+        #return self.pos
+        
+        
+    def fire_bubble(self, vel):
+        self.vel [0] = vel [0] 
+        self.vel [1] = vel [1]
+        self.sound.play()
+        #return self.vel
+        
+    def is_stuck(self):
+        if (self.pos [1] + self.vel [1]) <= BUBBLE_RADIUS:
+            self.pos[1] = BUBBLE_RADIUS
+            stuck_bubbles.add (a_bubble)
+            return True
+        
+        else:
+            for bubble in stuck_bubbles:
+                if self.collide(bubble):
+                    stuck_bubbles.add (self)
+                    if self.color == bubble.color:
+                        if bubble.pos[1]<self.pos[1]:
+                            bubble.death_to_below(stuck_bubbles)
+                        else:
+                            self.death_to_below(stuck_bubbles)
+                        #stuck_bubbles.remove(self) 
+                        #stuck_bubbles.remove(bubble)
+                    return True
+            return False
+        
+    def death_to_below(self,bubbles):
+        #print bubbles
+        if len(bubbles) == 0:
+            stuck_bubbles.remove(self)
+            return
+        fresh_bubbles = bubbles.copy()
+        fresh_bubbles.remove(self)
+        for bubble in fresh_bubbles:
+            #print bubble 
+            #print bubble.pos[1]>self.pos[1]
+            if self.collide(bubble) and bubble.pos[1]>self.pos[1]:
+                bubble.death_to_below(fresh_bubbles)
+                
+        
+        #for bubble in below:
+            #bubble.death_to_below()    
+        if self in stuck_bubbles:
+            stuck_bubbles.remove(self)
+        
+   
+        
+    def collide(self, bubble):
+        #print 'check'
+        if dist (self.pos, bubble.pos)<= BUBBLE_RADIUS*2:
+            #print 'check2'
+            return True
+        else:
+            return False
+            
+    def draw(self, canvas):
+        canvas.draw_circle(self.pos, BUBBLE_RADIUS, 1, 'White', self.color)
+        
+
+# define keyhandlers to control firing_angle
+def keydown(key):
+    global a_bubble, firing_angle_vel, bubble_stuck, firing_angle, bubble_stuck
+    
+    if simplegui.KEY_MAP['left'] == key:
+    
+        firing_angle_vel += FIRING_ANGLE_VEL_INC
+        
+    if simplegui.KEY_MAP['right'] == key:
+    
+        firing_angle_vel -= FIRING_ANGLE_VEL_INC
+        
+    if bubble_stuck:
+        if simplegui.KEY_MAP['space'] == key:  
+            av = angle_to_vector (-firing_angle)
+            a_bubble.fire_bubble ([av[0] * 10, av[1]*10])
+            bubble_stuck = False
+    
+
+def keyup(key):
+    global firing_angle_vel, firing_angle
+    
+    if simplegui.KEY_MAP['left'] == key:
+    
+        firing_angle_vel -= FIRING_ANGLE_VEL_INC
+        
+    if simplegui.KEY_MAP['right'] == key:
+    
+        firing_angle_vel += FIRING_ANGLE_VEL_INC
+    
+    
+    
+# define draw handler
+def draw(canvas):
+    global firing_angle, a_bubble, bubble_stuck, firing_angle_vel, stuck_bubbles
+    
+    firing_angle += firing_angle_vel
+    # update firing angle
+    firing_end = angle_to_vector (firing_angle)
+    # draw firing line
+    canvas.draw_line(FIRING_POSITION,\
+                     (firing_end[0] * FIRING_LINE_LENGTH + WIDTH / 2,\
+                       HEIGHT - firing_end[1] * FIRING_LINE_LENGTH),3, 'White')
+   
+
+    if a_bubble.is_stuck ():
+        print a_bubble.pos 
+        
+        bubble_stuck = True
+        a_bubble = Bubble ()
+        
+        
+    #print firing_angle
+    # update a_bubble and check for sticking
+    a_bubble.update ()
+    # draw a bubble and stuck bubbles
+    a_bubble.draw(canvas) 
+    for bubble in stuck_bubbles:
+        bubble.draw (canvas)
+    
+    
+# create frame and register handlers
+frame = simplegui.create_frame("Bubble Shooter", WIDTH, HEIGHT)
+frame.set_keydown_handler(keydown)
+frame.set_keyup_handler(keyup)
+frame.set_draw_handler(draw)
+a_bubble = Bubble ()
+# create initial buble and start frame
+frame.start()
