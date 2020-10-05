@@ -1,0 +1,89 @@
+# template for "Stopwatch: The Game"
+
+# define global variables
+import simplegui
+
+increment = 0
+x = 0
+y = 0
+check = False
+# define helper function format that converts time
+# in tenths of seconds into formatted string A:BC.D
+def format(t):
+    
+    if 0 <= t and t <= 9:
+        return str ('0:00.') + str (t)
+    elif 10 <= t and t <= 59:
+        return str ('0:0') + str (t//10) + '.' + str (t%10)
+    elif 60 <= t and t <= 99:
+        return str ('0:0') + str (t//10) + '.' + str (t%10)
+    elif  100 <= t and t <= 599:
+        return str ('0:') + str (t//10) + '.' + str (t%10)
+    elif 600 <= t and t%600//10 < 10:
+        return str (t//600) + ':0' + str (t%600//10) + '.' + str (t%10)
+    elif 600 <= t:
+        return str (t//600) + ':' + str (t%600//10) + '.' + str (t%10)
+    else:
+        return 'wow'
+    
+    
+# define event handlers for buttons; "Start", "Stop", "Reset"
+def start ():
+    global check
+    check = True
+    timer.start ()
+    
+def stop ():
+    global x
+    global y
+    global increment
+    global check 
+    timer.stop ()
+    if check:
+        y = y + 1
+        if increment%10 == 0:
+            x = x + 1
+            
+    check = False
+    
+    
+def reset ():
+    global increment
+    global x
+    global y
+    global check
+    x = 0
+    y = 0
+    timer.stop ()
+    increment = 0
+    check = False
+
+# define event handler for timer with 0.1 sec interval
+def tick ():
+    global increment
+    print increment
+    increment += 1
+    
+
+# define draw handler
+def draw (canvas):
+    global x
+    global y
+    canvas.draw_text(format (increment), (80, 150), 50, 'Red')
+    canvas.draw_text ((str(x) + '/' + str(y)), (220,30), 30, 'White')
+    
+    
+    
+# create frame
+
+frame =  simplegui.create_frame('Stopwatch. Game', 300, 300)
+frame.add_button('Start', start)
+frame.add_button('Stop', stop)
+frame.add_button('Reset', reset)
+frame.set_draw_handler(draw)
+timer = simplegui.create_timer(100, tick)
+
+# start frame
+frame.start ()
+
+# Please remember to review the grading rubric
